@@ -108,3 +108,6 @@ site/
 .env
 .env.local
 config.local.js
+*.gz
+*.bin
+*.txt
