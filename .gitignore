@@ -111,3 +111,4 @@ config.local.js
 *.gz
 *.bin
 *.txt
+*.vec
