@@ -44,6 +44,9 @@ def procrustes_alignment(en_embeddings, hi_embeddings, en_lexicon, hi_lexicon):
     en_matrix = np.array([en_embeddings[word] for word in en_lexicon])
     hi_matrix = np.array([hi_embeddings[word] for word in hi_lexicon])
 
+    en_matrix = en_matrix / np.linalg.norm(en_matrix, axis=1)[:, np.newaxis]
+    hi_matrix = hi_matrix / np.linalg.norm(hi_matrix, axis=1)[:, np.newaxis]
+
     U, _, Vt = np.linalg.svd(np.dot(en_matrix.T, hi_matrix))
     W = np.dot(U, Vt)
 
