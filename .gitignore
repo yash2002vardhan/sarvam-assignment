@@ -112,3 +112,4 @@ config.local.js
 *.bin
 *.txt
 *.vec
+*.pth
