@@ -1,28 +1,19 @@
 import numpy as np
 import io
 
-def load_embeddings(file_path):
+def load_embeddings(file_path, max_vocab=100000):
     """Loads FastText embeddings from a file."""
     embeddings = {}
     with io.open(file_path, 'r', encoding='utf-8', newline='\n', errors='ignore') as f:
         next(f)  # Skip header
-        for line in f:
+        for idx, line in enumerate(f):
+            if idx >= max_vocab:
+                break
             tokens = line.rstrip().split(' ')
             word = tokens[0]
             vector = np.array(tokens[1:], dtype=np.float32)
             embeddings[word] = vector
     return embeddings
-
-def limit_vocabulary(embeddings, top_n=100000):
-    """Limits the vocabulary to the top N most frequent words."""
-    sorted_words = sorted(embeddings.items(), key=lambda x: len(x[1]), reverse=True)
-    limited_embeddings = {}
-    for i, (word, vector) in enumerate(sorted_words):
-        if i < top_n:
-            limited_embeddings[word] = vector
-        else:
-            break
-    return limited_embeddings
 
 def load_bilingual_lexicon(file_path, en_embeddings, hi_embeddings):
     """Loads a bilingual lexicon from a file and filters it based on available embeddings."""
@@ -122,11 +113,14 @@ def ablation_study(en_embeddings, hi_embeddings, lexicon_path, test_lexicon_path
     return results
 
 # Main execution
-en_embeddings = load_embeddings("wiki.en.vec") #Replace with your path
-hi_embeddings = load_embeddings("wiki.hi.vec") #Replace with your path
+en_embeddings = load_embeddings("wiki.en.vec", max_vocab=100000) #Replace with your path
+hi_embeddings = load_embeddings("wiki.hi.vec", max_vocab=100000) #Replace with your path
 
-en_embeddings = limit_vocabulary(en_embeddings)
-hi_embeddings = limit_vocabulary(hi_embeddings)
+print(len(en_embeddings))
+print(len(hi_embeddings))
+
+# en_embeddings = limit_vocabulary(en_embeddings, max_vocab=100000)
+# hi_embeddings = limit_vocabulary(hi_embeddings, max_vocab=100000)
 
 en_lexicon, hi_lexicon = load_bilingual_lexicon("en-hi.txt", en_embeddings, hi_embeddings)
 
