@@ -1,89 +1,79 @@
-# Simplified MUSE Implementation
+# Bilingual Word Embedding Alignment
 
-This is a simplified implementation of the unsupervised adversarial method for bilingual word embeddings alignment, inspired by the [MUSE](https://github.com/facebookresearch/MUSE) project by Facebook Research.
+This repository contains implementations of both supervised and unsupervised approaches for aligning word embeddings between English and Hindi languages. The goal is to enable cross-lingual word translation by mapping words from one language's embedding space to another.
 
-## Overview
+## Files Required
 
-This implementation provides a way to align word embeddings across languages without using parallel data (dictionaries). It uses an adversarial approach with:
+To run this project, you'll need the following files:
 
-1. A **mapping function** that transforms embeddings from one language to another
-2. A **discriminator** that tries to distinguish between real embeddings and mapped embeddings
-3. **CSLS (Cross-domain Similarity Local Scaling)** for better translation retrieval
+- `wiki.en.vec`: English word embeddings file (FastText format)
+  - Download: [wiki.en.vec](https://dl.fbaipublicfiles.com/fasttext/vectors-wiki/wiki.en.vec)
+- `wiki.hi.vec`: Hindi word embeddings file (FastText format)
+  - Download: [wiki.hi.vec](https://dl.fbaipublicfiles.com/fasttext/vectors-wiki/wiki.hi.vec)
+- `en-hi.txt`: Training bilingual lexicon for supervised approach
+  - Download: [en-hi.txt](https://dl.fbaipublicfiles.com/arrival/dictionaries/en-hi.txt)
+- `en-hi-test.txt`: Test bilingual lexicon for evaluation
+  - Download: [en-hi.5000-6500.txt](https://dl.fbaipublicfiles.com/arrival/dictionaries/en-hi.5000-6500.txt)
 
-## Key Components
+Please place these files in the project directory before running the notebooks.
 
-### 1. Unsupervised Alignment
+## Supervised Approach (`supervised.ipynb`)
 
-The core of the implementation is the `unsupervised_alignment` function, which:
+The supervised approach uses a bilingual lexicon (dictionary) to learn the mapping between English and Hindi word embeddings. Here's what the notebook does:
 
-- Takes English and Hindi embeddings as input
-- Trains a mapping function to transform English embeddings into the Hindi embedding space
-- Uses adversarial training to ensure the mapped embeddings are indistinguishable from real Hindi embeddings
-- Returns the aligned English embeddings
+1. **Loading Embeddings**: Loads pre-trained FastText word embeddings for both languages
+2. **Bilingual Lexicon Processing**: Processes the training dictionary to create aligned word pairs
+3. **Procrustes Alignment**: Implements the Procrustes analysis to find the optimal linear transformation between embedding spaces
+4. **Translation**: Provides functions to translate words using cosine similarity in the aligned space
+5. **Evaluation**: Implements Precision@k metrics to evaluate translation quality
+6. **Ablation Study**: Analyzes performance with different sizes of training lexicons
 
-### 2. Translation Retrieval
+The supervised approach achieves:
+- Precision@1: ~59.34%
+- Precision@5: ~78.06%
 
-Translation is performed using the CSLS method, which:
+## Optional Credit: Unsupervised Approach (`unsupervised.ipynb`)
 
-- Calculates similarity between an English word and all Hindi words
-- Applies cross-domain similarity local scaling to improve translation quality
-- Returns the top k Hindi translations for a given English word
+The unsupervised approach uses an adversarial training strategy to align word embeddings without using a bilingual dictionary. Here's what the notebook implements:
 
-### 3. Interactive Testing
+1. **Generator-Discriminator Architecture**:
+   - Generator: Learns a linear mapping between source and target embedding spaces
+   - Discriminator: Tries to distinguish between real target embeddings and fake ones
 
-The implementation includes an interactive testing function that allows you to:
+2. **Key Components**:
+   - Orthogonal initialization and regularization for the mapping matrix
+   - Cross-domain Similarity Local Scaling (CSLS) to reduce hubness problem
+   - Adversarial training with early stopping
 
-- Enter English words and see their Hindi translations
-- Test the quality of the alignment
-- Exit when done
+3. **Training Process**:
+   - Alternates between training the discriminator and generator
+   - Uses BCE loss for adversarial training
+   - Implements early stopping based on generator loss
+   - Saves the best model based on performance
+
+4. **Translation**:
+   - Uses CSLS similarity for finding nearest neighbors
+   - Handles out-of-vocabulary words gracefully
+   - Returns top-k translation candidates
+
+The unsupervised approach provides an alternative method that doesn't require parallel data, though it may achieve lower accuracy compared to the supervised approach.
 
 ## Usage
 
-### Small Example
+1. Place the required files in the project directory
+2. Run either notebook based on your needs:
+   - Use `supervised.ipynb` if you have a bilingual dictionary
+   - Use `unsupervised.ipynb` if you don't have parallel data
 
-The code includes a small example with a few words in English and Hindi to demonstrate the functionality:
+## Dependencies
 
-```python
-# Create small example embeddings
-en_embeddings = {
-    "hello": np.array([0.1, 0.2, 0.3], dtype=np.float32),
-    "world": np.array([0.4, 0.5, 0.6], dtype=np.float32),
-    "good": np.array([0.7, 0.8, 0.9], dtype=np.float32),
-}
-
-hi_embeddings = {
-    "नमस्ते": np.array([0.15, 0.25, 0.35], dtype=np.float32),
-    "दुनिया": np.array([0.45, 0.55, 0.65], dtype=np.float32),
-    "अच्छा": np.array([0.75, 0.85, 0.95], dtype=np.float32),
-}
-```
-
-### Full Embeddings
-
-To use the full embeddings, you need to download the FastText embeddings:
-
-- English: `wiki.en.vec`
-- Hindi: `wiki.hi.vec`
-
-Place these files in the same directory as the script and run it.
-
-## Differences from Original MUSE
-
-This implementation is simplified compared to the original MUSE project:
-
-1. **Simpler Architecture**: Uses a basic linear mapping and discriminator
-2. **No Refinement**: Omits the refinement step that uses CSLS to improve the mapping
-3. **No Validation**: Doesn't include validation on a small dictionary
-4. **No Orthogonal Constraint**: Doesn't enforce orthogonality on the mapping
-
-## Requirements
-
-- Python 3.6+
+- Python 3.x
 - NumPy
 - PyTorch
-- SciPy
+- FastText embeddings
 
-## References
+## Notes
 
-- [MUSE: Multilingual Unsupervised and Supervised Embeddings](https://github.com/facebookresearch/MUSE)
-- [Word Translation Without Parallel Data](https://arxiv.org/abs/1710.04087)
+- The performance of both approaches depends heavily on the quality and size of the word embeddings
+- The supervised approach generally performs better but requires parallel data
+- The unsupervised approach is more flexible but may need more tuning to achieve good results
